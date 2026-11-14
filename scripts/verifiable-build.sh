@@ -39,6 +39,11 @@ BUILD_ARGS=(--library-name mass_asset_v1)
 [[ -n "${BASE_IMAGE:-}" ]] && BUILD_ARGS+=(--base-image "$BASE_IMAGE")
 (cd "$PROGRAM_DIR" && solana-verify build "${BUILD_ARGS[@]}")
 
+# The Docker build may leave target/ owned by root; give it back to the current user.
+if [[ ! -w "$PROGRAM_DIR/target" ]]; then
+  echo "target/ is not writable (owned by Docker/root); fixing ownership with sudo..."
+  sudo chown -R "$(id -u):$(id -g)" "$PROGRAM_DIR/target"
+fi
 HASH="$(solana-verify get-executable-hash "$SO")"
 mkdir -p "$OUT_DIR"
 {
@@ -53,5 +58,6 @@ mkdir -p "$OUT_DIR"
 
 echo
 echo "Binary: $SO"
+echo "Note: executable_hash (solana-verify) ignores trailing padding, so it differs from a plain sha256sum of the file."
 echo "Next: run the on-chain suite against THIS binary:"
 echo "  MASS_SO=$SO WALLET=... tests/onchain/run.sh"

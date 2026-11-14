@@ -30,10 +30,12 @@ RPC="${X1_RPC:-https://rpc.mainnet.x1.xyz}"
 WALLET="${WALLET:-$HOME/.config/solana/id.json}"
 MASS_SO_PREBUILT="${MASS_SO:-}"
 MASS_SO="${MASS_SO:-$MASS_DIR/target/deploy/mass_asset_v1.so}"
-MASS_KP="$MASS_DIR/target/deploy/mass_asset_v1-keypair.json"
+# Fresh, throwaway program keypairs live here (not in target/, which a Docker build may own as root).
+KEYS_DIR="$HERE/.keys"
+MASS_KP="$KEYS_DIR/mass_asset_v1-keypair.json"
 ISSUER_SO="$ISSUER_DIR/target/deploy/mass_asset_test_issuer.so"
-ISSUER_KP="$ISSUER_DIR/target/deploy/mass_asset_test_issuer-keypair.json"
-ISSUER_B_KP="$ISSUER_DIR/target/deploy/mass_asset_test_issuer_b-keypair.json"
+ISSUER_KP="$KEYS_DIR/mass_asset_test_issuer-keypair.json"
+ISSUER_B_KP="$KEYS_DIR/mass_asset_test_issuer_b-keypair.json"
 STATE="$HERE/onchain.state.json"
 LOG="$HERE/onchain.log"
 
@@ -68,6 +70,7 @@ echo '[2/8] Building test issuer...'
 printf 'Mass Asset .so: %s bytes, sha256 %s\n' "$(stat -c%s "$MASS_SO")" "$(sha256sum "$MASS_SO" | awk '{print $1}')"
 
 echo '[3/8] Fresh program keypairs...'
+mkdir -p "$KEYS_DIR"
 solana-keygen new --no-bip39-passphrase --silent --force -o "$MASS_KP" >/dev/null
 solana-keygen new --no-bip39-passphrase --silent --force -o "$ISSUER_KP" >/dev/null
 MASS_ID="$(solana-keygen pubkey "$MASS_KP")"
