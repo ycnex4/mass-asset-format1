@@ -15,6 +15,9 @@
 #   X1_RPC   RPC endpoint (default: https://rpc.mainnet.x1.xyz)
 #   MASS_SO  optional: test this prebuilt Mass Asset binary (e.g. from scripts/verifiable-build.sh)
 #            instead of building one with cargo build-sbf. Its sha256 is printed in the log.
+#   MASS_PROGRAM_ID  optional: test an ALREADY DEPLOYED Mass Asset program (e.g. the official
+#            immutable one). Mass Asset is then neither built, deployed nor closed; only the
+#            disposable test issuers are deployed and closed.
 #
 # Net cost ≈ fees + 3 program-account rents (~0.0034 XNT, kept by the loader)
 #          + one 0-byte shell (~0.0009 XNT) intentionally left at the dead issuer ProgramData.
@@ -58,7 +61,11 @@ close_program() {
 
 echo '[0/8] Host unit tests (Mass Asset)...'
 (cd "$MASS_DIR" && cargo test --quiet)
-if [[ -n "$MASS_SO_PREBUILT" ]]; then
+EXISTING_MASS_ID="${MASS_PROGRAM_ID:-}"
+if [[ -n "$EXISTING_MASS_ID" ]]; then
+  echo "[1/8] Testing the deployed Mass Asset program $EXISTING_MASS_ID (no build/deploy/close)"
+  solana --url "$RPC" program show "$EXISTING_MASS_ID"
+elif [[ -n "$MASS_SO_PREBUILT" ]]; then
   echo "[1/8] Using prebuilt Mass Asset binary: $MASS_SO"
   [[ -f "$MASS_SO" ]] || { echo "ERROR: MASS_SO not found: $MASS_SO" >&2; exit 1; }
 else
@@ -67,13 +74,17 @@ else
 fi
 echo '[2/8] Building test issuer...'
 (cd "$ISSUER_DIR" && cargo build-sbf)
-printf 'Mass Asset .so: %s bytes, sha256 %s\n' "$(stat -c%s "$MASS_SO")" "$(sha256sum "$MASS_SO" | awk '{print $1}')"
+[[ -n "$EXISTING_MASS_ID" ]] || printf 'Mass Asset .so: %s bytes, sha256 %s\n' "$(stat -c%s "$MASS_SO")" "$(sha256sum "$MASS_SO" | awk '{print $1}')"
 
 echo '[3/8] Fresh program keypairs...'
 mkdir -p "$KEYS_DIR"
-solana-keygen new --no-bip39-passphrase --silent --force -o "$MASS_KP" >/dev/null
+if [[ -n "$EXISTING_MASS_ID" ]]; then
+  MASS_ID="$EXISTING_MASS_ID"
+else
+  solana-keygen new --no-bip39-passphrase --silent --force -o "$MASS_KP" >/dev/null
+  MASS_ID="$(solana-keygen pubkey "$MASS_KP")"
+fi
 solana-keygen new --no-bip39-passphrase --silent --force -o "$ISSUER_KP" >/dev/null
-MASS_ID="$(solana-keygen pubkey "$MASS_KP")"
 ISSUER_ID="$(solana-keygen pubkey "$ISSUER_KP")"
 # Issuer B: a fresh keypair whose authority bump differs from issuer A's.
 (cd "$HERE" && node -e '
@@ -90,7 +101,8 @@ console.log(`authority bump: issuer A=${a} issuer B=${b}`);
 ISSUER_B_ID="$(solana-keygen pubkey "$ISSUER_B_KP")"
 printf 'Mass Asset v1:  %s\nTest issuer A:  %s\nTest issuer B:  %s\n' "$MASS_ID" "$ISSUER_ID" "$ISSUER_B_ID"
 
-NEED=$(( $(rent_for_so "$MASS_SO") + 2 * $(rent_for_so "$ISSUER_SO") + 60000000 ))
+MASS_RENT=0; [[ -n "$EXISTING_MASS_ID" ]] || MASS_RENT="$(rent_for_so "$MASS_SO")"
+NEED=$(( MASS_RENT + 2 * $(rent_for_so "$ISSUER_SO") + 60000000 ))
 BAL_START="$(balance)"
 printf 'Wallet: %s\nBalance: %s lamports, needed (deploy rent + 0.06 XNT margin): %s lamports\n' "$WALLET_PUBKEY" "$BAL_START" "$NEED"
 if (( BAL_START < NEED )); then
@@ -102,14 +114,14 @@ echo '[ENV] loader-v4 related feature gates on this cluster:'
 solana --url "$RPC" feature status 2>/dev/null | grep -i -E 'loader|v4|migrat' || echo '  (none listed / feature status unavailable)'
 
 echo '[4/8] Deploying Mass Asset, issuer A, issuer B...'
-solana --url "$RPC" --keypair "$WALLET" program deploy "$MASS_SO" --program-id "$MASS_KP" --upgrade-authority "$WALLET"
+[[ -n "$EXISTING_MASS_ID" ]] || solana --url "$RPC" --keypair "$WALLET" program deploy "$MASS_SO" --program-id "$MASS_KP" --upgrade-authority "$WALLET"
 if ! solana --url "$RPC" --keypair "$WALLET" program deploy "$ISSUER_SO" --program-id "$ISSUER_KP" --upgrade-authority "$WALLET"; then
-  echo "ERROR: issuer A deploy failed; closing Mass Asset to return its rent." >&2
-  close_program "$MASS_ID"; exit 1
+  echo "ERROR: issuer A deploy failed." >&2
+  [[ -n "$EXISTING_MASS_ID" ]] || close_program "$MASS_ID"; exit 1
 fi
 if ! solana --url "$RPC" --keypair "$WALLET" program deploy "$ISSUER_SO" --program-id "$ISSUER_B_KP" --upgrade-authority "$WALLET"; then
   echo "ERROR: issuer B deploy failed; closing the other programs to return their rent." >&2
-  close_program "$ISSUER_ID"; close_program "$MASS_ID"; exit 1
+  close_program "$ISSUER_ID"; [[ -n "$EXISTING_MASS_ID" ]] || close_program "$MASS_ID"; exit 1
 fi
 
 echo '[5/8] Phase LIVE...'
@@ -129,8 +141,12 @@ else
   echo "WARNING: no state file from live phase; skipping orphan phase."
 fi
 
-echo '[8/8] Closing the Mass Asset deployment (returns its rent)...'
-close_program "$MASS_ID"
+if [[ -n "$EXISTING_MASS_ID" ]]; then
+  echo '[8/8] Mass Asset was an existing deployment; not closing it.'
+else
+  echo '[8/8] Closing the Mass Asset deployment (returns its rent)...'
+  close_program "$MASS_ID"
+fi
 rm -f "$STATE"
 
 BAL_END="$(balance)"
