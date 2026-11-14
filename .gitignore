@@ -1,0 +1,8 @@
+target/
+node_modules/
+.env
+.env.*
+*keypair*.json
+*wallet*.json
+*.state.json
+*.log

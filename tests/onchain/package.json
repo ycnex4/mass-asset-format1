@@ -1,0 +1,8 @@
+{
+  "name": "mass-asset-onchain-suite",
+  "private": true,
+  "description": "On-chain conformance suite for Mass Asset v1 on X1",
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0"
+  }
+}

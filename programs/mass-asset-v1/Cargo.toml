@@ -1,0 +1,27 @@
+[package]
+name = "mass-asset-v1"
+version = "0.1.0"
+edition = "2021"
+description = "Mass Asset v1 — minimal on-chain asset standard for X1 (spec: docs/spec.md)"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+solana-program = "=3.0.0"
+
+# Host unit tests only: verify the hand-encoded System instructions.
+[dev-dependencies]
+solana-system-interface = { version = "=2.0.0", features = ["bincode"] }
+
+[features]
+custom-heap = []
+custom-panic = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1

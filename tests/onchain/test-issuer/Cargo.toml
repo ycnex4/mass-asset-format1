@@ -1,0 +1,23 @@
+[package]
+name = "mass-asset-test-issuer"
+version = "0.1.0"
+edition = "2021"
+description = "Disposable signing-proxy issuer for the Mass Asset v1 on-chain conformance suite. Not a template."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+solana-program = "=3.0.0"
+
+[features]
+custom-heap = []
+custom-panic = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
