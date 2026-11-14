@@ -1,6 +1,6 @@
 # Mass Asset v1 — Specification
 
-**Version:** 1.0 (frozen)
+**Version:** 1.0.1 (frozen; 1.0.1 changes only the deployment policy in §4.4 and §9)
 **Date:** 2026-11-14
 **Network:** X1 (SVM)
 
@@ -322,7 +322,7 @@ namespace_absent(ns, pd) :=
 
 - The check is on the **owner** of the ProgramData account, not on its lamports (Appendix A.2).
 - In v1, issuers under any other loader are never considered absent.
-- Support for other loaders (for example loader-v4) can only be added as a **new tag** with its own predicate. Tag 4 never changes.
+- Support for other loaders (for example loader-v4) can only be added by a **new program** (a new program id) with its own predicate. The deployed v1 program never changes (§9).
 
 ### 4.5 Reserved tags
 
@@ -353,7 +353,7 @@ Mass Asset cannot see who stands between it and the issuer. The security of a na
 | E3 | The issuer MUST hard-code its authority bump as a constant (computed offline and checked by a test), not call `find_program_address` at runtime. Otherwise the issuer pays a variable cost per call |
 | E4 | The test issuer in `tests/onchain/test-issuer` is a signing proxy for tests. It violates E1 and MUST NOT be used as a template |
 
-Future Mass Asset PDA types MUST use a first seed that does not start with `mass-asset` (for example `ma2-…`), so that their addresses cannot collide with v1 addresses.
+Future Mass Asset versions MUST use a first seed that does not start with `mass-asset` (for example `ma2-…`), so that their addresses cannot collide with v1 addresses.
 
 ## 7. Integration rules for value-backed assets (normative for such issuers)
 
@@ -430,11 +430,11 @@ Built-in errors Mass Asset can also return:
 - **Runtime rules.** Rent return and the hard-close behaviour rely on the current X1/SVM rent and account rules. `namespace_absent` (§4.4) likewise relies on the current upgradeable-loader behaviour: closing a program deletes its ProgramData, and a closed program id cannot be redeployed. These are assumptions about the runtime, not laws of the chain.
 - **Fees.** On X1 the fee is charged for the **requested** CU limit. Clients MUST simulate immediately before sending and set the limit to the simulated value plus a margin. Recommended margin: `create` +8,000, others +2,000. The cost of `create` depends on the `seed` (object bump search) and on whether the address is pre-funded.
 - **CPI depth.** `create` uses two stack levels: Mass Asset and System. The chain router → aggregator → issuer → Mass Asset → System already reaches the Agave maximum of 5.
-- **Upgrade authority.** The Mass Asset program is upgradeable at launch. This is a public commitment:
-  - the layout (§3), semantics and error codes (§4, §8) never change;
-  - changes are possible only through a new `version` or new tags;
-  - the upgrade authority is revoked after stabilisation and audit.
-- **Loader-v4.** If X1 enables migration of programs to loader-v4, a migrated issuer keeps working, but `orphan_close` never fires for its assets (§4.4). Issuers that rely on `orphan_close` SHOULD NOT migrate to loader-v4 until Mass Asset adds a predicate for it.
+- **Immutability.** The official Mass Asset v1 program is deployed as **immutable**: it has no upgrade authority from the moment of deployment. Its layout (§3), instructions, check order and error codes (§4, §8) can never change.
+  - Any fix or extension (including support for other loaders) is published as a **new program with a new program id**. Assets created under a program id stay under that program id forever.
+  - Issuers SHOULD be able to work with more than one Mass Asset program id (the current one and earlier ones), so that their existing assets remain redeemable after they adopt a newer program.
+  - The official program id and the hash of its verifiable build are published in the repository README.
+- **Loader-v4.** If X1 enables migration of programs to loader-v4, a migrated issuer keeps working, but `orphan_close` never fires for its assets (§4.4). Issuers that rely on `orphan_close` SHOULD NOT migrate to loader-v4 unless a Mass Asset program with a loader-v4 predicate is available and adopted.
 
 ---
 

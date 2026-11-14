@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 — 2026-11-14
+
+Documentation only; no change to the program, layout, instructions or errors.
+
+- Deployment policy: the official program is deployed immutable. Fixes and extensions are published as new programs with new program ids (spec §4.4, §9).
+- Issuers should support more than one Mass Asset program id.
+
 ## 1.0.0 — 2026-11-14
 
 First frozen version of the Mass Asset v1 standard:

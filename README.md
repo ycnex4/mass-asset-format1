@@ -2,7 +2,7 @@
 
 A minimal on-chain asset standard for X1 (SVM).
 
-**Version 1.0 — frozen.** The account layout, instructions, check order and error codes do not change. Any future extension comes as a new `version` or new instruction tags.
+**Version 1.0 — frozen.** The account layout, instructions, check order and error codes do not change. The official program is deployed **immutable** (no upgrade authority); any future fix or extension is published as a new program with a new program id (spec §9).
 
 ## What it is
 
@@ -28,7 +28,7 @@ The full rules are in the specification.
 
 ## Deployment
 
-The program id of the official deployment will be announced here and in the release notes. v1 assets exist only under that id.
+The official program is deployed immutable. Its program id and the hash of its verifiable build will be announced here and in the release notes. Assets exist only under the program id they were created with.
 
 ## Build and test
 
