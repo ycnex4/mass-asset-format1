@@ -13,6 +13,8 @@
 # Environment:
 #   WALLET   keypair that pays for everything (default: ~/.config/solana/id.json)
 #   X1_RPC   RPC endpoint (default: https://rpc.mainnet.x1.xyz)
+#   MASS_SO  optional: test this prebuilt Mass Asset binary (e.g. from scripts/verifiable-build.sh)
+#            instead of building one with cargo build-sbf. Its sha256 is printed in the log.
 #
 # Net cost ≈ fees + 3 program-account rents (~0.0034 XNT, kept by the loader)
 #          + one 0-byte shell (~0.0009 XNT) intentionally left at the dead issuer ProgramData.
@@ -26,7 +28,8 @@ MASS_DIR="$ROOT/programs/mass-asset-v1"
 ISSUER_DIR="$HERE/test-issuer"
 RPC="${X1_RPC:-https://rpc.mainnet.x1.xyz}"
 WALLET="${WALLET:-$HOME/.config/solana/id.json}"
-MASS_SO="$MASS_DIR/target/deploy/mass_asset_v1.so"
+MASS_SO_PREBUILT="${MASS_SO:-}"
+MASS_SO="${MASS_SO:-$MASS_DIR/target/deploy/mass_asset_v1.so}"
 MASS_KP="$MASS_DIR/target/deploy/mass_asset_v1-keypair.json"
 ISSUER_SO="$ISSUER_DIR/target/deploy/mass_asset_test_issuer.so"
 ISSUER_KP="$ISSUER_DIR/target/deploy/mass_asset_test_issuer-keypair.json"
@@ -53,11 +56,16 @@ close_program() {
 
 echo '[0/8] Host unit tests (Mass Asset)...'
 (cd "$MASS_DIR" && cargo test --quiet)
-echo '[1/8] Building Mass Asset v1...'
-(cd "$MASS_DIR" && cargo build-sbf)
+if [[ -n "$MASS_SO_PREBUILT" ]]; then
+  echo "[1/8] Using prebuilt Mass Asset binary: $MASS_SO"
+  [[ -f "$MASS_SO" ]] || { echo "ERROR: MASS_SO not found: $MASS_SO" >&2; exit 1; }
+else
+  echo '[1/8] Building Mass Asset v1...'
+  (cd "$MASS_DIR" && cargo build-sbf)
+fi
 echo '[2/8] Building test issuer...'
 (cd "$ISSUER_DIR" && cargo build-sbf)
-printf 'Mass Asset .so size: %s bytes\n' "$(stat -c%s "$MASS_SO")"
+printf 'Mass Asset .so: %s bytes, sha256 %s\n' "$(stat -c%s "$MASS_SO")" "$(sha256sum "$MASS_SO" | awk '{print $1}')"
 
 echo '[3/8] Fresh program keypairs...'
 solana-keygen new --no-bip39-passphrase --silent --force -o "$MASS_KP" >/dev/null

@@ -6,3 +6,4 @@ node_modules/
 *wallet*.json
 *.state.json
 *.log
+build/

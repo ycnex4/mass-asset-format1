@@ -24,6 +24,8 @@ The full rules are in the specification.
 | [`docs/spec.md`](docs/spec.md) | normative specification, with a rationale appendix |
 | [`programs/mass-asset-v1/`](programs/mass-asset-v1/) | the program (Rust, `solana-program` 3.0) |
 | [`tests/onchain/`](tests/onchain/) | on-chain conformance suite for X1 |
+| [`docs/verify.md`](docs/verify.md) | how to verify the deployed program against this source |
+| [`scripts/verifiable-build.sh`](scripts/verifiable-build.sh) | deterministic (Docker) build and hash |
 | [`CHANGELOG.md`](CHANGELOG.md) | versions |
 
 ## Deployment
