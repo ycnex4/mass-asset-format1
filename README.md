@@ -36,12 +36,14 @@ The official Mass Asset v1 program is deployed on X1 mainnet **without an upgrad
 |---|---|
 | Program id | `MAssPQXuBXvvf196oXKFZ1GiC9kTsJJ8podQV3m72Wv` |
 | Network | X1 mainnet |
-| Deployed in slot | 93180244 |
-| Upgrade authority | none |
+| Deployed in slot | 93180244 (tx `4X7dcSYu…`) |
+| Upgrade authority | none — removed in slot 93180247 by the same `--final` deploy (tx `52sCXTou…`) |
 | Executable hash | `187aecc0a5604a0a3bac3bee5da7c5b253c331ea0ccc604a321116f7e914c626` |
 | Program size | 47,480 bytes |
 | Source | tag `v1.0.1` (`programs/` identical to the build commit `4114b30`) |
 | Build image | `solanafoundation/solana-verifiable-build:4.0.0` |
+
+Transactions: deployment `4X7dcSYuiKhZWouPLGiyruAinucmQ2uTEfft2RVVZ4tGyUEdRimzXNs6XMgFHQ68DUCqBWoyXdR2P6XdkHZMvzm1`, authority removal `52sCXTouFj9KxVCmrwrasYTV2DrGajDXzUuGVsToxitLwyMzaJQYepyGDkad8mpp939HGyDe54ZA6YukDSw2DPzK`.
 
 Anyone can reproduce the build and compare hashes; see [docs/verify.md](docs/verify.md). The full on-chain conformance suite (`tests/onchain`, 53 checks) passed against this deployment.
 

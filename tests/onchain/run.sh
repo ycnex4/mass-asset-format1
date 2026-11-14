@@ -124,21 +124,24 @@ if ! solana --url "$RPC" --keypair "$WALLET" program deploy "$ISSUER_SO" --progr
   close_program "$ISSUER_ID"; [[ -n "$EXISTING_MASS_ID" ]] || close_program "$MASS_ID"; exit 1
 fi
 
+FAILED_PHASES=""
 echo '[5/8] Phase LIVE...'
-node "$HERE/onchain-suite.mjs" live "$MASS_ID" "$ISSUER_ID" "$STATE" || echo "WARNING: live phase exited with an error"
+node "$HERE/onchain-suite.mjs" live "$MASS_ID" "$ISSUER_ID" "$STATE" || { echo "ERROR: live phase failed"; FAILED_PHASES+=" live"; }
 
 echo '[6/8] Phase ISSUER-B (constant authority cost)...'
 if [[ -f "$STATE" ]]; then
-  node "$HERE/onchain-suite.mjs" issuer-b "$MASS_ID" "$ISSUER_B_ID" "$STATE" || echo "WARNING: issuer-b phase exited with an error"
+  node "$HERE/onchain-suite.mjs" issuer-b "$MASS_ID" "$ISSUER_B_ID" "$STATE" || { echo "ERROR: issuer-b phase failed"; FAILED_PHASES+=" issuer-b"; }
+else
+  FAILED_PHASES+=" issuer-b(skipped)"
 fi
 close_program "$ISSUER_B_ID"
 
 echo '[7/8] Closing test issuer A (namespace disappears), phase ORPHAN...'
 close_program "$ISSUER_ID"
 if [[ -f "$STATE" ]]; then
-  node "$HERE/onchain-suite.mjs" orphan "$MASS_ID" "$ISSUER_ID" "$STATE" || echo "WARNING: orphan phase exited with an error"
+  node "$HERE/onchain-suite.mjs" orphan "$MASS_ID" "$ISSUER_ID" "$STATE" || { echo "ERROR: orphan phase failed"; FAILED_PHASES+=" orphan"; }
 else
-  echo "WARNING: no state file from live phase; skipping orphan phase."
+  echo "ERROR: no state file from live phase; skipping orphan phase."; FAILED_PHASES+=" orphan(skipped)"
 fi
 
 if [[ -n "$EXISTING_MASS_ID" ]]; then
@@ -151,4 +154,8 @@ rm -f "$STATE"
 
 BAL_END="$(balance)"
 printf '\nBalance start: %s\nBalance end:   %s\nNet cost:      %s lamports\n' "$BAL_START" "$BAL_END" "$(( BAL_START - BAL_END ))"
-printf '\n=== ON-CHAIN SUITE COMPLETE ===\nSaved full log: %s\n' "$LOG"
+if [[ -n "$FAILED_PHASES" ]]; then
+  printf '\n=== ON-CHAIN SUITE FAILED:%s ===\nSaved full log: %s\n' "$FAILED_PHASES" "$LOG"
+  exit 1
+fi
+printf '\n=== ON-CHAIN SUITE PASSED ===\nSaved full log: %s\n' "$LOG"

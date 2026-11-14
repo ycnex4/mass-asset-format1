@@ -506,3 +506,4 @@ for (const x of results.filter((y) => !y.ok)) console.log(`  FAILED: ${x.id} —
 console.log("\nMetrics (fee lamports / CU consumed):");
 for (const m of metrics) console.log(`  ${m.label}: fee=${m.fee} CU=${m.cu} massCU=${m.massCu}`);
 console.log("RESULT_JSON", JSON.stringify({ phase: PHASE, passed, total: results.length, results, metrics }));
+if (passed !== results.length) process.exitCode = 1;

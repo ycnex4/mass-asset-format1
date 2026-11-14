@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 — 2026-11-14
+
+- Spec §9 and README: the upgrade authority was removed three slots after deployment (slot 93180247) by the same `--final` deploy; both transactions are listed.
+- `tests/onchain`: the suite exits non-zero when any check or phase fails; cleanup still runs.
+- Program code unchanged.
+
 ## 1.0.2 — 2026-11-14
 
 - Official immutable deployment: `MAssPQXuBXvvf196oXKFZ1GiC9kTsJJ8podQV3m72Wv` (slot 93180244, executable hash `187aecc0…c626`). README lists the deployment record.
