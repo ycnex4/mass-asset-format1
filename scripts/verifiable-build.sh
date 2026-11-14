@@ -9,6 +9,12 @@
 #   build/mass_asset_v1.sha256                               (executable hash + build metadata)
 #
 # Requirements: Docker, `cargo install solana-verify`.
+#
+# BASE_IMAGE (optional): Docker image to build in, e.g.
+#   BASE_IMAGE=solanafoundation/solana-verifiable-build:3.1.0 ./scripts/verifiable-build.sh
+# By default solana-verify picks an image from the solana-program version in Cargo.lock.
+# The image must ship a Solana toolchain new enough for the locked dependencies
+# (edition 2024 requires cargo >= 1.85). The image used is recorded in the output.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,7 +35,9 @@ if [[ -n "$DIRTY" ]]; then
 fi
 
 echo "== Verifiable build of $COMMIT =="
-(cd "$PROGRAM_DIR" && solana-verify build --library-name mass_asset_v1)
+BUILD_ARGS=(--library-name mass_asset_v1)
+[[ -n "${BASE_IMAGE:-}" ]] && BUILD_ARGS+=(--base-image "$BASE_IMAGE")
+(cd "$PROGRAM_DIR" && solana-verify build "${BUILD_ARGS[@]}")
 
 HASH="$(solana-verify get-executable-hash "$SO")"
 mkdir -p "$OUT_DIR"
@@ -39,6 +47,7 @@ mkdir -p "$OUT_DIR"
   echo "executable_hash:  $HASH"
   echo "size_bytes:       $(stat -c%s "$SO")"
   echo "solana_verify:    $(solana-verify --version 2>/dev/null || echo unknown)"
+  echo "base_image:       ${BASE_IMAGE:-auto (selected by solana-verify from Cargo.lock)}"
   echo "built_at_utc:     $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } | tee "$OUT"
 

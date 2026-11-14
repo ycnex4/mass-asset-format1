@@ -8,7 +8,8 @@ For the official deployment, the README lists:
 
 - the program id;
 - the git commit (tag) it was built from;
-- the executable hash produced by `solana-verify`.
+- the executable hash produced by `solana-verify`;
+- the Docker base image used for the build.
 
 ## How to verify
 
@@ -21,7 +22,7 @@ git checkout <published tag or commit>
 
 # 1. Deterministic build inside the solana-verify Docker image
 cd programs/mass-asset-v1
-solana-verify build --library-name mass_asset_v1
+solana-verify build --library-name mass_asset_v1 --base-image <published base image>
 solana-verify get-executable-hash target/deploy/mass_asset_v1.so
 
 # 2. Hash of the program deployed on X1
