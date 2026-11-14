@@ -30,7 +30,22 @@ The full rules are in the specification.
 
 ## Deployment
 
-The official program is deployed immutable. Its program id and the hash of its verifiable build will be announced here and in the release notes. Assets exist only under the program id they were created with.
+The official Mass Asset v1 program is deployed on X1 mainnet **without an upgrade authority** (immutable): it can never be changed or closed.
+
+| | |
+|---|---|
+| Program id | `MAssPQXuBXvvf196oXKFZ1GiC9kTsJJ8podQV3m72Wv` |
+| Network | X1 mainnet |
+| Deployed in slot | 93180244 |
+| Upgrade authority | none |
+| Executable hash | `187aecc0a5604a0a3bac3bee5da7c5b253c331ea0ccc604a321116f7e914c626` |
+| Program size | 47,480 bytes |
+| Source | tag `v1.0.1` (`programs/` identical to the build commit `4114b30`) |
+| Build image | `solanafoundation/solana-verifiable-build:4.0.0` |
+
+Anyone can reproduce the build and compare hashes; see [docs/verify.md](docs/verify.md). The full on-chain conformance suite (`tests/onchain`, 53 checks) passed against this deployment.
+
+Assets exist only under the program id they were created with. A future fix ships as a new program id; integrators should be ready to recognise more than one Mass Asset program id (spec §9).
 
 ## Build and test
 

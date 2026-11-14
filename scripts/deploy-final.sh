@@ -68,11 +68,16 @@ solana --url "$RPC" --keypair "$WALLET" program deploy "$SO" --program-id "$PROG
 
 echo
 echo "=== Post-deployment checks ==="
-SHOW="$(solana --url "$RPC" program show "$PROGRAM_ID")"
+SHOW=""
+for i in $(seq 1 20); do
+  SHOW="$(solana --url "$RPC" program show "$PROGRAM_ID" 2>/dev/null)" && break
+  echo "  waiting for the RPC to see $PROGRAM_ID ($i/20)..."; sleep 3
+done
+[[ -n "$SHOW" ]] || { echo "ERROR: RPC still does not show $PROGRAM_ID; check manually: solana program show $PROGRAM_ID" >&2; exit 1; }
 echo "$SHOW"
 AUTH="$(echo "$SHOW" | awk -F': *' '/^Authority:/{print $2}')"
 SLOT="$(echo "$SHOW" | awk -F': *' '/^Last Deployed In Slot:/{print $2}')"
-ONCHAIN_HASH="$(solana-verify get-program-hash -u "$RPC" "$PROGRAM_ID")"
+ONCHAIN_HASH="$(solana-verify get-program-hash -u "$RPC" "$PROGRAM_ID" || echo unavailable)"
 
 OK=1
 [[ "$AUTH" == "none" ]] && echo "OK   upgrade authority: none (immutable)" || { echo "FAIL upgrade authority: $AUTH"; OK=0; }
