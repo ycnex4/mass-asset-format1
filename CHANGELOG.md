@@ -4,6 +4,7 @@
 
 - Official immutable deployment: `MAssPQXuBXvvf196oXKFZ1GiC9kTsJJ8podQV3m72Wv` (slot 93180244, executable hash `187aecc0…c626`). README lists the deployment record.
 - `scripts/deploy-final.sh`: waits for the RPC to see the new program before the post-deployment checks.
+- Licensed under Apache-2.0 (LICENSE, NOTICE).
 - Program code unchanged.
 
 ## 1.0.1 — 2026-11-14
