@@ -1,5 +1,10 @@
 # Mass Asset
 
+> **Archive — Mass Asset format 1.** This repository is now `ycnex4/mass-asset-format1` and is archived (read-only).
+> The format 1 program `MAssPQXuBXvvf196oXKFZ1GiC9kTsJJ8podQV3m72Wv` stays deployed and immutable on X1 mainnet;
+> this code, its tags and its releases remain the reference for it. The next format is a new program with a new
+> program id, developed at **https://github.com/ycnex4/mass-asset**.
+
 A minimal on-chain asset standard for X1 (SVM).
 
 **Version 1.0 — frozen.** The account layout, instructions, check order and error codes do not change. The official program is deployed **immutable** (no upgrade authority); any future fix or extension is published as a new program with a new program id (spec §9).
